@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="format-detection" content="telephone=no, address=no, date=no" />
-  <title>Staff Lounge Claw Machine 2026 | Staff Appreciation 2026</title>
+  <title>Teacher Lounge Claw Raffle | Staff Appreciation 2026</title>
   <style>
     :root {
       --gold: #d4af37;
@@ -297,7 +297,7 @@
     <div id="top-ui">
       <div id="title-card">
         <h1>Teacher Lounge Claw Raffle</h1>
-        <p>Choose your name • Drop the claw • Reveal your prize</p>
+        <p>Choose your name once • Drop the claw • Reveal your prize</p>
         
       </div>
       <div id="controls">
@@ -312,7 +312,7 @@
         <div id="machine-window">
           <div id="logo-hub"><img src="Lime_Street_Elementary_School_logo_template_300.png" alt="Lime Street logo" /></div>
           <div id="top-rail"></div>
-          <div id="mystery-cover">Hidden Prize Pile<br>10 Red Bags • 10 Yellow Bags• 5 Gift Cards • 1 Grand Prize • 50 Next Time</div>
+          <div id="mystery-cover">Hidden Prize Pile<br>10 Red • 10 Yellow • 5 Gift Cards • 1 Grand • 50 Next Time</div>
           <div id="hidden-pit"></div>
           <div id="prize-chute">Reveal Chute</div>
           <div id="message">Choose your name first.</div>
@@ -345,6 +345,7 @@
           <div id="played-list"></div>
           <button id="close-played" class="primary">Close List</button>
           <button id="back-result">Back to Prize</button>
+          
         </div>
       </div>
     </div>
@@ -372,8 +373,9 @@
     const loading = document.getElementById("loading");
     const spotlight = document.getElementById("spotlight");
     const showPlayed = document.getElementById("show-played");
-    const backResult = document.getElementById("back-result");
+    
     const closePlayed = document.getElementById("close-played");
+    const backResult = document.getElementById("back-result");
     const resultScreen = document.getElementById("result-screen");
     const playedScreen = document.getElementById("played-screen");
     const playedList = document.getElementById("played-list");
@@ -481,11 +483,10 @@
       return availableStaff.find(s => s.id === teacherSelect.value);
     }
 
-    function drawPrize() {
-      if (!prizeBag.length) resetPrizeBag();
-      const index = Math.floor(Math.random() * prizeBag.length);
-      const [prize] = prizeBag.splice(index, 1);
-      return prize;
+    function prizeObjectFromLabel(label) {
+      const match = PRIZE_POOL.find(p => p.label.toLowerCase() === String(label).toLowerCase());
+      if (match) return match;
+      return { type: "next", label: label || "Try next Time", emoji: "⭐", id: `custom-${Date.now()}` };
     }
 
     async function dropClaw() {
@@ -501,7 +502,17 @@
       spotlight.style.display = "none";
 
       shufflePrizePile(false);
-      const prize = drawPrize();
+      const saveResult = await savePrizeToSheet(teacher);
+      if (!saveResult.success) {
+        showMessage(saveResult.message || "This name has already played.");
+        await loadStaff();
+        rebuildAvailableStaff();
+        resetClaw();
+        shufflePrizePile(false);
+        return;
+      }
+
+      const prize = prizeObjectFromLabel(saveResult.prize);
       let prizeEl = document.querySelector(`.prize-token[data-id='${prize.id}']`);
       if (!prizeEl) {
         visiblePrizes[0] = prize;
@@ -545,16 +556,6 @@
       }
 
       await wait(520);
-      const saveResult = await savePrizeToSheet(teacher, prize);
-      if (!saveResult.success) {
-        showMessage(saveResult.message || "This name has already played.");
-        await loadStaff();
-        rebuildAvailableStaff();
-        resetClaw();
-        shufflePrizePile(false);
-        return;
-      }
-
       showSpotlight(teacher, prize);
       resetClaw();
       await loadStaff();
@@ -562,13 +563,12 @@
       shufflePrizePile(false);
     }
 
-    async function savePrizeToSheet(teacher, prize) {
+    async function savePrizeToSheet(teacher) {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
-          name: teacher.name,
-          prize: prize.label
+          name: teacher.name
         })
       });
       return await response.json();
@@ -592,7 +592,7 @@
       prizeBig.querySelector(".emoji").textContent = prize.emoji;
       prizeBig.querySelector(".label").textContent = prize.label;
       document.getElementById("spot-years").textContent = staff.years ? `${staff.years} Years of service` : "Thank you for everything you do!";
-      document.getElementById("spot-quote").textContent = staff.quote ? `“${staff.quote}”` : "You are done with the claw machine today. Prizes can be picked up in the Lounge today.";
+      document.getElementById("spot-quote").textContent = staff.quote ? `“${staff.quote}”` : "You have now played. Your name has been removed from the dropdown on this computer.";
       spotlight.style.display = "flex";
     }
 
@@ -633,13 +633,15 @@
     dropBtn.addEventListener("click", dropClaw);
     playedBtn.addEventListener("click", openPlayedScreen);
     showPlayed.addEventListener("click", openPlayedScreen);
-    backResult.addEventListener("click", () => {
-      playedScreen.style.display = "none";
-      resultScreen.style.display = "block";
-    });
+    
 
     closePlayed.addEventListener("click", () => {
       spotlight.style.display = "none";
+    });
+
+    backResult.addEventListener("click", () => {
+      playedScreen.style.display = "none";
+      resultScreen.style.display = "block";
     });
 
     spotlight.addEventListener("click", (e) => {

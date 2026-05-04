@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="format-detection" content="telephone=no, address=no, date=no" />
+  <title>Staff Lounge Claw Machine 2026 | Staff Appreciation 2026</title>
+  <style>
+    :root {
+      --gold: #d4af37;
+      --yellow: #ffd84d;
+      --red: #a80f18;
+      --black: #070707;
+      --border: rgba(255,255,255,0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050505;
+      color: white;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background:
+        linear-gradient(90deg, rgba(255,216,77,0.96) 0 12%, transparent 12% 100%),
+        repeating-conic-gradient(from 45deg, #101010 0% 25%, #8e0e16 0% 50%) 50% / 70px 70px;
+    }
+
+    #app { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+    #loading {
+      position: fixed; inset: 0; z-index: 999;
+      display: flex; justify-content: center; align-items: center;
+      background: rgba(0,0,0,0.86); color: var(--gold);
+      font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+    }
+
+    #top-ui {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      z-index: 50; width: min(94vw, 720px);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      pointer-events: none;
+    }
+
+    #title-card {
+      background: rgba(0,0,0,0.78); border: 1px solid var(--border);
+      border-radius: 18px; padding: 10px 18px; text-align: center;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.42); backdrop-filter: blur(14px);
+    }
+
+    h1 {
+      margin: 0; color: var(--gold); font-size: clamp(18px, 4vw, 31px);
+      text-transform: uppercase; letter-spacing: 2px; line-height: 1;
+    }
+
+    #title-card p { margin: 5px 0 0; color: #ddd; font-size: 12px; }
+
+    #controls {
+      pointer-events: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+      background: rgba(0,0,0,0.36); border-radius: 18px; padding: 6px;
+      backdrop-filter: blur(12px);
+    }
+
+    button, select {
+      border: 1px solid var(--border); background: rgba(12,12,12,0.96); color: white;
+      border-radius: 11px; padding: 10px 12px; font-weight: 900; font-size: 12px;
+      cursor: pointer; box-shadow: 0 12px 28px rgba(0,0,0,0.34);
+    }
+
+    select { min-width: 240px; max-width: 360px; }
+
+    button.primary {
+      background: linear-gradient(180deg, #ffe680, #d4af37); color: #151100;
+      border-color: rgba(0,0,0,0.28);
+    }
+
+    button.danger { background: rgba(120, 15, 22, 0.95); }
+    button:disabled, select:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    #machine-wrap {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      padding: 124px 12px 18px;
+    }
+
+    #machine {
+      position: relative; width: min(88vw, 720px); height: min(76vh, 740px); min-height: 510px;
+      border-radius: 30px; border: 4px solid rgba(212,175,55,0.86);
+      background:
+        radial-gradient(circle at 50% 24%, rgba(255,255,255,0.12), transparent 31%),
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.1)), rgba(0,0,0,0.78);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 0 80px rgba(255,216,77,0.05), 0 0 45px rgba(212,175,55,0.25), 0 30px 90px rgba(0,0,0,0.75);
+      overflow: hidden; backdrop-filter: blur(8px);
+    }
+
+    #machine::before {
+      content: ""; position: absolute; inset: 18px; border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.12); pointer-events: none; z-index: 2;
+    }
+
+    #machine-window { position: absolute; inset: 0; z-index: 4; transition: transform 850ms cubic-bezier(.2,.9,.2,1); }
+    #machine-window.reveal-bottom { transform: translateY(-210px); }
+
+    #logo-hub {
+      position: absolute; top: 43%; left: 50%; transform: translate(-50%, -50%);
+      opacity: 0.08; z-index: 0; pointer-events: none;
+    }
+    #logo-hub img { width: 220px; max-width: 42vw; }
+
+    #top-rail {
+      position: absolute; top: 78px; left: 8%; right: 8%; height: 12px;
+      border-radius: 999px; background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      box-shadow: 0 0 18px rgba(212,175,55,0.7); z-index: 8;
+    }
+
+    #mystery-cover {
+      position: absolute; left: 7%; right: 7%; bottom: 86px; height: 185px; z-index: 12;
+      border-radius: 24px 24px 0 0; border: 1px solid rgba(212,175,55,0.52);
+      background: repeating-linear-gradient(135deg, rgba(212,175,55,0.18) 0 12px, rgba(0,0,0,0.82) 12px 24px), rgba(0,0,0,0.88);
+      box-shadow: inset 0 0 36px rgba(0,0,0,0.7), 0 -18px 60px rgba(0,0,0,0.52);
+      display: flex; align-items: center; justify-content: center; color: var(--gold);
+      font-weight: 950; text-transform: uppercase; letter-spacing: 1px; text-align: center; padding: 18px;
+      transition: opacity 450ms ease, transform 850ms ease;
+    }
+    #machine-window.reveal-bottom #mystery-cover { opacity: 0.16; transform: translateY(80px); }
+
+    #claw-system {
+      position: absolute; top: 42px; left: 50%; width: 84px; height: 190px;
+      transform: translateX(-50%); z-index: 40; transition: left 40ms linear; pointer-events: none;
+    }
+
+    #cable {
+      position: absolute; top: 0; left: 50%; width: 3px; height: 82px; transform: translateX(-50%);
+      background: linear-gradient(180deg, #fff, var(--gold)); box-shadow: 0 0 12px rgba(212,175,55,0.8);
+      transition: height 850ms cubic-bezier(.2,.9,.25,1);
+    }
+
+    #claw-head {
+      position: absolute; top: 72px; left: 50%; width: 72px; height: 44px; transform: translateX(-50%);
+      border: 2px solid var(--gold); border-radius: 18px 18px 10px 10px; background: rgba(0,0,0,0.82);
+      box-shadow: 0 0 20px rgba(212,175,55,0.48); transition: top 850ms cubic-bezier(.2,.9,.25,1);
+    }
+
+    .prong {
+      position: absolute; top: 105px; width: 6px; height: 54px; background: var(--gold); border-radius: 999px;
+      transform-origin: top center; box-shadow: 0 0 12px rgba(212,175,55,0.65);
+      transition: top 850ms cubic-bezier(.2,.9,.25,1), transform 260ms ease;
+    }
+    #prong-l { left: 23px; transform: rotate(28deg); }
+    #prong-r { right: 23px; transform: rotate(-28deg); }
+    #prong-c { left: 50%; transform: translateX(-50%); height: 46px; }
+    #claw-system.open #prong-l { transform: rotate(42deg); }
+    #claw-system.open #prong-r { transform: rotate(-42deg); }
+    #claw-system.closed #prong-l { transform: rotate(10deg); }
+    #claw-system.closed #prong-r { transform: rotate(-10deg); }
+    #claw-system.down #cable { height: 520px; }
+    #claw-system.down #claw-head { top: 510px; }
+    #claw-system.down .prong { top: 543px; }
+
+    #hidden-pit {
+      position: absolute; left: 7%; right: 7%; bottom: -170px; height: 250px; z-index: 6;
+      border-radius: 28px 28px 0 0; background: radial-gradient(circle at 30% 35%, rgba(255,216,77,0.12), transparent 28%), rgba(0,0,0,0.78);
+      border: 1px solid rgba(255,255,255,0.12); box-shadow: inset 0 20px 60px rgba(0,0,0,0.75); overflow: hidden;
+    }
+
+    .prize-token {
+      position: absolute; width: 76px; height: 76px; border-radius: 18px;
+      border: 3px solid white; box-shadow: 0 0 0 3px rgba(212,175,55,0.42), 0 0 24px rgba(255,216,77,0.34), 0 16px 28px rgba(0,0,0,0.42);
+      z-index: 5; transform: rotate(var(--rot)); animation: pile-wiggle var(--dur) ease-in-out infinite alternate;
+      transition: transform 600ms ease, opacity 500ms ease, left 800ms ease, top 800ms ease; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      font-weight: 950; font-size: 11px; line-height: 1.05; text-transform: uppercase;
+    }
+
+    .prize-token .emoji { font-size: 24px; line-height: 1; margin-bottom: 4px; }
+    .prize-red { background: linear-gradient(145deg, #ff3535, #7f0710); }
+    .prize-yellow { background: linear-gradient(145deg, #ffe875, #c28d00); color: #1d1300; }
+    .prize-gift { background: linear-gradient(145deg, #ffffff, #7dc5ff); color: #06101c; }
+    .prize-grand { background: linear-gradient(145deg, #fff2a7, #d4af37 45%, #6d4b00); color: #1d1300; }
+    .prize-next { background: linear-gradient(145deg, #2b2b2b, #090909); color: #ddd; }
+
+    .prize-token.grabbed { z-index: 80; animation: none; box-shadow: 0 0 0 5px rgba(212,175,55,0.62), 0 0 38px rgba(255,216,77,0.82), 0 20px 40px rgba(0,0,0,0.55); }
+
+    @keyframes pile-wiggle {
+      from { transform: translateY(0) rotate(var(--rot)); }
+      to { transform: translateY(-8px) rotate(calc(var(--rot) * -1)); }
+    }
+
+    #prize-chute {
+      position: absolute; bottom: 0; left: 50%; width: 260px; max-width: 54%; height: 88px; transform: translateX(-50%);
+      border-radius: 26px 26px 0 0; border: 2px solid rgba(212,175,55,0.8); border-bottom: none;
+      background: rgba(0,0,0,0.9); z-index: 30; display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-weight: 950; text-transform: uppercase; letter-spacing: 1px; box-shadow: inset 0 0 30px rgba(212,175,55,0.09);
+    }
+
+    #message {
+      position: absolute; left: 50%; bottom: 98px; transform: translateX(-50%); z-index: 60;
+      background: rgba(0,0,0,0.86); border: 1px solid rgba(212,175,55,0.7); color: var(--gold);
+      border-radius: 999px; padding: 9px 14px; font-size: 12px; font-weight: 900; display: none;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.42); text-align: center; white-space: nowrap;
+    }
+
+    #spotlight {
+      position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+    }
+
+    #spot-card {
+      width: min(90vw, 410px); background: rgba(5,5,5,0.96); border: 2px solid var(--gold); border-radius: 24px;
+      padding: 20px; text-align: center; box-shadow: 0 30px 100px rgba(0,0,0,0.72), 0 0 55px rgba(212,175,55,0.32);
+      animation: pop-in 360ms ease-out;
+    }
+
+    @keyframes pop-in { from { transform: scale(0.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    #spot-photo {
+      width: 126px; height: 126px; margin: 0 auto 12px; border-radius: 24px; background-size: cover; background-position: center;
+      border: 4px solid white; box-shadow: 0 0 0 6px rgba(212,175,55,0.44), 0 0 40px rgba(255,216,77,0.55);
+    }
+
+    #prize-big {
+      margin: 12px auto 4px; width: 160px; min-height: 92px; border-radius: 22px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-weight: 950; text-transform: uppercase; border: 3px solid white;
+      box-shadow: 0 0 0 5px rgba(212,175,55,0.35), 0 0 34px rgba(255,216,77,0.45);
+    }
+    #prize-big .emoji { font-size: 34px; margin-bottom: 5px; }
+
+    #spot-card h2 { margin: 0; color: var(--gold); font-size: 24px; }
+    #spot-card p { margin: 9px 0 0; color: #eee; font-size: 14px; line-height: 1.35; }
+    #show-played, #back-result { margin-top: 16px; width: 100%; }
+
+    .played-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      padding: 8px 12px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #played-list {
+      margin-top: 0;
+      max-height: 330px;
+      overflow-y: auto;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .played-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px;
+    }
+
+    .played-row:last-child { border-bottom: none; }
+    .played-prize { color: var(--gold); font-weight: 900; text-align: right; }
+    #remaining-count { color: var(--gold); font-weight: 900; }
+
+    @media (max-width: 720px) {
+      body { background: linear-gradient(90deg, rgba(255,216,77,0.96) 0 9%, transparent 9% 100%), repeating-conic-gradient(from 45deg, #101010 0% 25%, #8e0e16 0% 50%) 50% / 54px 54px; }
+      #machine-wrap { padding-top: 146px; }
+      #machine { width: 93vw; height: 72vh; min-height: 500px; border-radius: 24px; }
+      #machine-window.reveal-bottom { transform: translateY(-185px); }
+      #top-rail { top: 66px; }
+      #claw-system { top: 32px; transform: translateX(-50%) scale(0.86); }
+      #claw-system.down #cable { height: 500px; }
+      #claw-system.down #claw-head { top: 490px; }
+      #claw-system.down .prong { top: 523px; }
+      #hidden-pit { bottom: -148px; height: 232px; }
+      #mystery-cover { height: 156px; bottom: 76px; }
+      .prize-token { width: 62px; height: 62px; border-radius: 14px; font-size: 9px; }
+      .prize-token .emoji { font-size: 19px; }
+      #prize-chute { height: 76px; font-size: 12px; }
+      #message { bottom: 84px; max-width: 86%; white-space: normal; }
+      select { min-width: 210px; max-width: 78vw; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="loading">Loading Teacher List...</div>
+
+    <div id="top-ui">
+      <div id="title-card">
+        <h1>Teacher Lounge Claw Raffle</h1>
+        <p>Choose your name • Drop the claw • Reveal your prize</p>
+        
+      </div>
+      <div id="controls">
+        <select id="teacher-select" aria-label="Choose your name"></select>
+        <button class="primary" id="drop-btn">🕹️ Drop Claw</button>
+        <button id="played-btn">🏆 Played List</button>
+      </div>
+    </div>
+
+    <div id="machine-wrap">
+      <div id="machine">
+        <div id="machine-window">
+          <div id="logo-hub"><img src="Lime_Street_Elementary_School_logo_template_300.png" alt="Lime Street logo" /></div>
+          <div id="top-rail"></div>
+          <div id="mystery-cover">Hidden Prize Pile<br>10 Red Bags • 10 Yellow Bags• 5 Gift Cards • 1 Grand Prize • 50 Next Time</div>
+          <div id="hidden-pit"></div>
+          <div id="prize-chute">Reveal Chute</div>
+          <div id="message">Choose your name first.</div>
+        </div>
+
+        <div id="claw-system" class="open">
+          <div id="cable"></div>
+          <div id="claw-head"></div>
+          <div class="prong" id="prong-l"></div>
+          <div class="prong" id="prong-c"></div>
+          <div class="prong" id="prong-r"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="spotlight">
+      <div id="spot-card">
+        <div id="result-screen">
+          <div id="spot-photo"></div>
+          <h2 id="spot-name"></h2>
+          <div id="prize-big"><span class="emoji"></span><span class="label"></span></div>
+          <p id="spot-years"></p>
+          <p id="spot-quote"></p>
+          <button id="show-played" class="primary">View Played List</button>
+        </div>
+
+        <div id="played-screen" style="display:none;">
+          <h2>Already Played</h2>
+          <div class="played-header"><span>Name</span><span>Prize</span></div>
+          <div id="played-list"></div>
+          <button id="close-played" class="primary">Close List</button>
+          <button id="back-result">Back to Prize</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxXlTv0mutHUVSoG2gKP2By_6gkeKPY-Won5yt6jZotNig_xs5SDz6ul2Kam9blC3Tj7Q/exec";
+    
+    const PRIZE_POOL = [
+      ...Array.from({ length: 10 }, (_, i) => ({ type: "red", label: "Red Bag", emoji: "🔴", id: `red-${i}` })),
+      ...Array.from({ length: 10 }, (_, i) => ({ type: "yellow", label: "Yellow Bag", emoji: "🟡", id: `yellow-${i}` })),
+      ...Array.from({ length: 5 }, (_, i) => ({ type: "gift", label: "Gift Card", emoji: "🎁", id: `gift-${i}` })),
+      { type: "grand", label: "Grand Prize", emoji: "🏆", id: "grand-0" },
+      ...Array.from({ length: 50 }, (_, i) => ({ type: "next", label: "Win Next Time", emoji: "⭐", id: `next-${i}` }))
+    ];
+
+    const machine = document.getElementById("machine");
+    const machineWindow = document.getElementById("machine-window");
+    const hiddenPit = document.getElementById("hidden-pit");
+    const claw = document.getElementById("claw-system");
+    const teacherSelect = document.getElementById("teacher-select");
+    const dropBtn = document.getElementById("drop-btn");
+    const playedBtn = document.getElementById("played-btn");
+    const message = document.getElementById("message");
+    const loading = document.getElementById("loading");
+    const spotlight = document.getElementById("spotlight");
+    const showPlayed = document.getElementById("show-played");
+    const backResult = document.getElementById("back-result");
+    const closePlayed = document.getElementById("close-played");
+    const resultScreen = document.getElementById("result-screen");
+    const playedScreen = document.getElementById("played-screen");
+    const playedList = document.getElementById("played-list");
+    let playedResults = [];
+
+    let staffAll = [];
+    let availableStaff = [];
+    let visiblePrizes = [];
+    let prizeBag = [];
+    let clawX = 50;
+    let direction = 1;
+    let isDropping = false;
+    let moveTimer = null;
+
+    function getPhotoUrl(rawUrl) {
+      let gId = "";
+      if (!rawUrl) return "";
+      if (rawUrl.includes("id=")) gId = rawUrl.split("id=")[1].split("&")[0];
+      else if (rawUrl.includes("/d/")) gId = rawUrl.split("/d/")[1].split("/")[0];
+      return gId ? `https://lh3.googleusercontent.com/u/0/d/${gId}` : rawUrl;
+    }
+
+        async function init() {
+      await loadStaff();
+      rebuildAvailableStaff();
+      resetPrizeBag();
+      shufflePrizePile(false);
+      startClawMotion();
+      loading.style.display = "none";
+      showMessage("Choose your name, then drop the claw.");
+      window.addEventListener("resize", () => renderPrizePile());
+    }
+
+    async function loadStaff() {
+      const response = await fetch(API_URL + "?t=" + Date.now());
+      const data = await response.json();
+
+      const available = Array.isArray(data) ? data : (data.available || []);
+      playedResults = Array.isArray(data) ? [] : (data.played || []);
+
+      staffAll = available.map((staff, i) => ({
+        id: `s-${i}-${(staff.name || "").replace(/[^a-z0-9]/gi, "").toLowerCase()}`,
+        name: staff.name || "",
+        quote: staff.quote || "",
+        photo: getPhotoUrl(staff.photo || ""),
+        years: staff.years || ""
+      })).filter(staff => staff.name);
+
+      staffAll.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function rebuildAvailableStaff() {
+      availableStaff = [...staffAll];
+      teacherSelect.innerHTML = `<option value="">Choose your name...</option>` + availableStaff.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+      dropBtn.disabled = availableStaff.length === 0;
+      if (availableStaff.length === 0) showMessage("All names have already played.");
+    }
+
+    function resetPrizeBag() {
+      prizeBag = [...PRIZE_POOL].sort(() => Math.random() - 0.5);
+    }
+
+    function shufflePrizePile(showMsg = true) {
+      if (isDropping) return;
+      visiblePrizes = [...prizeBag].sort(() => Math.random() - 0.5).slice(0, Math.min(24, prizeBag.length));
+      renderPrizePile();
+      if (showMsg) showMessage("Hidden prizes shuffled.");
+    }
+
+    function renderPrizePile() {
+      hiddenPit.innerHTML = "";
+      const rect = hiddenPit.getBoundingClientRect();
+      const cols = window.innerWidth < 720 ? 5 : 7;
+      const rows = Math.ceil(visiblePrizes.length / cols);
+      const cellW = rect.width / cols;
+      const cellH = Math.max(70, rect.height / Math.max(rows, 1));
+
+      visiblePrizes.forEach((prize, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const sizeOffset = window.innerWidth < 720 ? 31 : 38;
+        const el = document.createElement("div");
+        el.className = `prize-token prize-${prize.type}`;
+        el.dataset.id = prize.id;
+        el.innerHTML = `<span class="emoji">${prize.emoji}</span><span>${prize.label}</span>`;
+        el.style.left = `${col * cellW + cellW * 0.5 - sizeOffset + (Math.random() * 22 - 11)}px`;
+        el.style.top = `${row * cellH + 28 + (Math.random() * 22 - 11)}px`;
+        el.style.setProperty("--rot", `${Math.random() * 34 - 17}deg`);
+        el.style.setProperty("--dur", `${2.2 + Math.random() * 2.4}s`);
+        hiddenPit.appendChild(el);
+      });
+    }
+
+    function startClawMotion() {
+      clearInterval(moveTimer);
+      moveTimer = setInterval(() => {
+        if (isDropping) return;
+        clawX += direction * 0.7;
+        if (clawX >= 88 || clawX <= 12) direction *= -1;
+        claw.style.left = clawX + "%";
+      }, 24);
+    }
+
+    function chosenTeacher() {
+      return availableStaff.find(s => s.id === teacherSelect.value);
+    }
+
+    function drawPrize() {
+      if (!prizeBag.length) resetPrizeBag();
+      const index = Math.floor(Math.random() * prizeBag.length);
+      const [prize] = prizeBag.splice(index, 1);
+      return prize;
+    }
+
+    async function dropClaw() {
+      const teacher = chosenTeacher();
+      if (isDropping || !teacher) {
+        showMessage("Please choose your name first.");
+        return;
+      }
+
+      isDropping = true;
+      dropBtn.disabled = true;
+      teacherSelect.disabled = true;
+      spotlight.style.display = "none";
+
+      shufflePrizePile(false);
+      const prize = drawPrize();
+      let prizeEl = document.querySelector(`.prize-token[data-id='${prize.id}']`);
+      if (!prizeEl) {
+        visiblePrizes[0] = prize;
+        renderPrizePile();
+        prizeEl = document.querySelector(`.prize-token[data-id='${prize.id}']`);
+      }
+
+      showMessage("Claw is going down into the mystery prizes...");
+      claw.classList.add("open");
+      machineWindow.classList.add("reveal-bottom");
+      await wait(260);
+
+      claw.classList.add("down");
+      await wait(920);
+
+      claw.classList.remove("open");
+      claw.classList.add("closed");
+      showMessage("Grabbing one prize...");
+      await wait(420);
+
+      if (prizeEl) {
+        prizeEl.classList.add("grabbed");
+        const pitRect = hiddenPit.getBoundingClientRect();
+        const machineRect = machine.getBoundingClientRect();
+        const clawTargetX = machineRect.width * (clawX / 100) - pitRect.left + machineRect.left - 38;
+        prizeEl.style.left = `${Math.max(8, Math.min(pitRect.width - 84, clawTargetX))}px`;
+        prizeEl.style.top = `12px`;
+      }
+
+      claw.classList.remove("down");
+      showMessage("Lifting the prize...");
+      await wait(900);
+
+      machineWindow.classList.remove("reveal-bottom");
+      await wait(360);
+
+      if (prizeEl) {
+        const pitRect = hiddenPit.getBoundingClientRect();
+        prizeEl.style.left = `${pitRect.width / 2 - 38}px`;
+        prizeEl.style.top = `-96px`;
+      }
+
+      await wait(520);
+      const saveResult = await savePrizeToSheet(teacher, prize);
+      if (!saveResult.success) {
+        showMessage(saveResult.message || "This name has already played.");
+        await loadStaff();
+        rebuildAvailableStaff();
+        resetClaw();
+        shufflePrizePile(false);
+        return;
+      }
+
+      showSpotlight(teacher, prize);
+      resetClaw();
+      await loadStaff();
+      rebuildAvailableStaff();
+      shufflePrizePile(false);
+    }
+
+    async function savePrizeToSheet(teacher, prize) {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          name: teacher.name,
+          prize: prize.label
+        })
+      });
+      return await response.json();
+    }
+
+    function resetClaw() {
+      claw.classList.remove("closed", "down");
+      claw.classList.add("open");
+      isDropping = false;
+      teacherSelect.disabled = false;
+      dropBtn.disabled = availableStaff.length === 0;
+    }
+
+    function showSpotlight(staff, prize) {
+      resultScreen.style.display = "block";
+      playedScreen.style.display = "none";
+      document.getElementById("spot-photo").style.backgroundImage = staff.photo ? `url('${staff.photo}')` : "linear-gradient(145deg, #222, #000)";
+      document.getElementById("spot-name").textContent = staff.name;
+      const prizeBig = document.getElementById("prize-big");
+      prizeBig.className = `prize-${prize.type}`;
+      prizeBig.querySelector(".emoji").textContent = prize.emoji;
+      prizeBig.querySelector(".label").textContent = prize.label;
+      document.getElementById("spot-years").textContent = staff.years ? `${staff.years} Years of service` : "Thank you for everything you do!";
+      document.getElementById("spot-quote").textContent = staff.quote ? `“${staff.quote}”` : "You are done with the claw machine today. Maybe more prizes to come?!.";
+      spotlight.style.display = "flex";
+    }
+
+    function showMessage(text) {
+      message.textContent = text;
+      message.style.display = "block";
+      clearTimeout(message._timer);
+      message._timer = setTimeout(() => { message.style.display = "none"; }, 3000);
+    }
+
+    function renderPlayedList() {
+      playedList.innerHTML = "";
+      if (!playedResults.length) {
+        playedList.innerHTML = `<div class="played-row"><span>No one has played yet.</span><span></span></div>`;
+        return;
+      }
+
+      playedResults
+        .filter(item => item.name && item.prize)
+        .forEach(item => {
+          const row = document.createElement("div");
+          row.className = "played-row";
+          row.innerHTML = `<span>${item.name}</span><span class="played-prize">${item.prize}</span>`;
+          playedList.appendChild(row);
+        });
+    }
+
+    async function openPlayedScreen() {
+      await loadStaff();
+      renderPlayedList();
+      resultScreen.style.display = "none";
+      playedScreen.style.display = "block";
+      spotlight.style.display = "flex";
+    }
+
+    function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    dropBtn.addEventListener("click", dropClaw);
+    playedBtn.addEventListener("click", openPlayedScreen);
+    showPlayed.addEventListener("click", openPlayedScreen);
+    backResult.addEventListener("click", () => {
+      playedScreen.style.display = "none";
+      resultScreen.style.display = "block";
+    });
+
+    closePlayed.addEventListener("click", () => {
+      spotlight.style.display = "none";
+    });
+
+    spotlight.addEventListener("click", (e) => {
+      if (e.target === spotlight) spotlight.style.display = "none";
+    });
+
+    init();
+  </script>
+</body>
+</html>

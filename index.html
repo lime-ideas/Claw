@@ -577,7 +577,7 @@
       { type: "yellow", label: "Yellow Bag", emoji: "🟡" },
       { type: "gift", label: "Gift Card", emoji: "🎁" },
       { type: "grand", label: "Grand prize", emoji: "🏆" },
-      { type: "next", label: "Try next Time", emoji: 😕"" }
+      { type: "next", label: "Try next Time", emoji: "⭐" }
     ];
 
     const machine = document.getElementById("machine");
@@ -620,7 +620,7 @@
       if (lower.includes("gift")) return { type: "gift", label: label, emoji: "🎁" };
       if (lower.includes("yellow")) return { type: "yellow", label: label, emoji: "🟡" };
       if (lower.includes("red")) return { type: "red", label: label, emoji: "🔴" };
-      return { type: "next", label: label || "Try next Time", emoji: 😕"" };
+      return { type: "next", label: label || "Try next Time", emoji: "⭐" };
     }
 
     async function init() {
@@ -879,4 +879,3 @@
   </script>
 </body>
 </html>
-
